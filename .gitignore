@@ -1,1 +1,22 @@
+# User data (private)
 data/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyc
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Temp / IDE
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Test cache (auto-generated)
+.pytest_cache/
