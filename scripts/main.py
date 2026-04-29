@@ -113,12 +113,19 @@ def cmd_list():
     for name, data in users.items():
         bazi = data.get("bazi", {})
         if isinstance(bazi, dict):
-            raw = bazi.get("bazi", {})
+            # 兼容新旧格式：新格式有嵌套bazi，老格式直接是bazi字典
+            if 'bazi' in bazi and isinstance(bazi.get('bazi'), dict):
+                raw = bazi.get('bazi', {})
+            elif 'year' in bazi or 'month' in bazi:
+                raw = bazi  # 老格式：bazi直接是四柱字典
+            else:
+                raw = bazi.get('bazi', {})
             bazi_str = " ".join(raw.values()) if isinstance(raw, dict) else str(raw)
         else:
             bazi_str = "?"
         birth = data["birth"]
-        print(f"• {name}：{birth['year']}年{birth['month']}月{birth['day']}日 {bazi_str} ({data['gender']})")
+        gender = data.get('gender') or data.get('birth', {}).get('gender', '未知')
+        print(f"• {name}：{birth['year']}年{birth['month']}月{birth['day']}日 {bazi_str} ({gender})")
 
 
 def cmd_view():
