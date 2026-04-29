@@ -118,7 +118,7 @@ def cmd_list():
         else:
             bazi_str = "?"
         birth = data["birth"]
-        print(f"• {name}：{birth['year']}年{birth['month']}月{birth['day']}日 {bazi_str} ({birth['gender']})")
+        print(f"• {name}：{birth['year']}年{birth['month']}月{birth['day']}日 {bazi_str} ({data['gender']})")
 
 
 def cmd_view():

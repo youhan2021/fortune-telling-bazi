@@ -386,7 +386,7 @@ def view_joint(data_list):
             bazi_str = bazi.bazi_str
             mingge_v = bazi.mingge
         else:
-            raw = bazi.get("bazi", {})
+            raw = bazi.get("bazi", bazi)
             bazi_str = " ".join(raw.values()) if isinstance(raw, dict) else str(raw)
             mingge_v = bazi.get("mingge", "")
 
@@ -425,7 +425,7 @@ def view_joint(data_list):
                     bazi.hour_pillar.stem  + bazi.hour_pillar.branch
                 )
             else:
-                raw = bazi.get("bazi", {})
+                raw = bazi.get("bazi", bazi)
                 chars = ''.join(raw.values()) if isinstance(raw, dict) else ''
             char_sets.append(chars)
         lines += ["", "━━━ 五行契合 ━━━", _wuxing_affinity(char_sets)]

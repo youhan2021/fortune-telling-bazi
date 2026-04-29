@@ -150,6 +150,17 @@ BRANCH_PUNISHMENT = {
     ('酉','酉'):'酉酉自刑', ('亥','亥'):'亥亥自刑',
 }
 
+class BranchRelation:
+    HEX       = BRANCH_HEX
+    CLASH     = BRANCH_CLASH
+    PUNISHMENT = BRANCH_PUNISHMENT
+
+class Stem:
+    ELEMENT = STEM_ELEMENT
+
+class Branch:
+    ELEMENT = BRANCH_ELEMENT
+
 # Affliction tables (神煞)
 PEACH_BLOSSOM = {
     '寅':'卯', '午':'卯', '戌':'卯', '申':'酉', '子':'酉', '辰':'酉',
@@ -562,8 +573,20 @@ def _fate_to_dict(f: Fate) -> dict:
 
 
 def dict_to_fate(bazi_dict: dict, birth: dict, gender) -> Fate:
-    """Reconstruct Fate from stored dict (for view/joint commands)."""
-    det = bazi_dict.get('detail', {})
+    """Reconstruct Fate from stored dict (for view/joint commands).
+
+    Two stored formats exist in users.json:
+    - Old (你): users[name] = {bazi: {...bazi fields...}, detail: {...}}
+    - New (豆): users[name] = {bazi: {name, gender, birth, bazi: {...}}, detail: {...}}
+    We detect which by checking for 'detail' inside bazi_dict['bazi'].
+    """
+    # Detect format and set _inner to the object with .detail
+    if isinstance(bazi_dict.get('bazi'), dict) and 'detail' in bazi_dict['bazi']:
+        _inner = bazi_dict['bazi']   # new format: unwrap one level
+    else:
+        _inner = bazi_dict            # old format: already at bazi level
+
+    det = _inner.get('detail', {})
 
     def _rebuild(p_key: str) -> Pillar:
         d = det.get(p_key, {})
@@ -580,11 +603,17 @@ def dict_to_fate(bazi_dict: dict, birth: dict, gender) -> Fate:
         )
 
     gender_str = '男' if gender in (1, '1', '男') else '女'
-    bz = bazi_dict.get('bazi', {})
+    # Extract the innermost bazi dict (year/month/day/hour stems)
+    if _inner is not bazi_dict:
+        bz = _inner.get('bazi', {})   # new format: _inner is the full user bazi, get nested bazi
+    else:
+        bz = bazi_dict.get('bazi', {})  # old format: bazi is directly in user dict
+    if not isinstance(bz, dict) or 'year' not in bz:
+        bz = _inner if isinstance(_inner, dict) and 'year' in _inner else {}
     bazi_str = ' '.join(bz.values()) if isinstance(bz, dict) else str(bz)
 
     return Fate(
-        name          = bazi_dict.get('name', ''),
+        name          = _inner.get('name', bazi_dict.get('name', '')),
         gender        = gender_str,
         birth         = birth,
         year_pillar   = _rebuild('year'),
@@ -592,23 +621,23 @@ def dict_to_fate(bazi_dict: dict, birth: dict, gender) -> Fate:
         day_pillar    = _rebuild('day'),
         hour_pillar   = _rebuild('hour'),
         bazi_str      = bazi_str,
-        lunar_str     = bazi_dict.get('lunar_str', ''),
-        shengxiao     = bazi_dict.get('shengxiao', ''),
-        wuxing_count  = bazi_dict.get('wuxing_count', {}),
-        vitality      = bazi_dict.get('wangshuai', ''),
-        favorable     = bazi_dict.get('xiyong', ''),
-        xiyong        = bazi_dict.get('xiyong', ''),
-        mingge        = bazi_dict.get('mingge', ''),
-        day_stem      = bazi_dict.get('me', ''),
-        afflictions   = bazi_dict.get('shensha', []),
-        void          = bazi_dict.get('kongwang', ''),
-        vacant        = bazi_dict.get('kongwang', ''),
-        taiyuan       = bazi_dict.get('taiyuan', ''),
-        taixi         = bazi_dict.get('taixi', ''),
-        minggong      = bazi_dict.get('minggong', ''),
-        shengong      = bazi_dict.get('shengong', ''),
-        qiyun         = bazi_dict.get('qiyun', {}),
-        dayun         = bazi_dict.get('dayun', []),
+        lunar_str     = _inner.get('lunar_str', bazi_dict.get('lunar_str', '')),
+        shengxiao     = _inner.get('shengxiao', bazi_dict.get('shengxiao', '')),
+        wuxing_count  = _inner.get('wuxing_count', bazi_dict.get('wuxing_count', {})),
+        vitality      = _inner.get('wangshuai', bazi_dict.get('wangshuai', '')),
+        favorable     = _inner.get('xiyong', bazi_dict.get('xiyong', '')),
+        xiyong        = _inner.get('xiyong', bazi_dict.get('xiyong', '')),
+        mingge        = _inner.get('mingge', bazi_dict.get('mingge', '')),
+        day_stem      = _inner.get('me', bazi_dict.get('me', '')),
+        afflictions   = _inner.get('shensha', bazi_dict.get('shensha', [])),
+        void          = _inner.get('kongwang', bazi_dict.get('kongwang', '')),
+        vacant        = _inner.get('kongwang', bazi_dict.get('kongwang', '')),
+        taiyuan       = _inner.get('taiyuan', bazi_dict.get('taiyuan', '')),
+        taixi         = _inner.get('taixi', bazi_dict.get('taixi', '')),
+        minggong      = _inner.get('minggong', bazi_dict.get('minggong', '')),
+        shengong      = _inner.get('shengong', bazi_dict.get('shengong', '')),
+        qiyun         = _inner.get('qiyun', bazi_dict.get('qiyun', {})),
+        dayun         = _inner.get('dayun', bazi_dict.get('dayun', [])),
         _lunar        = None,
     )
 
